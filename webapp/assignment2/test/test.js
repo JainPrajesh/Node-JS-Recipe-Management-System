@@ -9,7 +9,7 @@ describe("Login", () => {
         it('it should validate user if correct', (done) => {
             chai.request(server)
                 .get('/v1/user/self')
-                .set("Authorization", "basic " + new Buffer("prajesh.jain@hotmail.com:Ric@1234").toString("base64"))
+                .set("Authorization", "basic " + new Buffer("bvkvikas@gmail.com:Vikas@1234").toString("base64"))
                 .end((err, res) => {
                     res.should.have.status(200);
                     res.body.should.be.a('object');

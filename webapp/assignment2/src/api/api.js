@@ -29,8 +29,8 @@ var authPromise = function (req) {
                                 error: 'Error getting user account'
                             });
                         } else {
-                            console.log("Result " + JSON.stringify(result.rows));
-                            console.log(result.rows[0])
+                            // console.log("Result " + JSON.stringify(result.rows));
+                            //console.log(result.rows[0])
                             if (result.rows[0] == null) {
                                 reject({
                                     message: 'Unauthorized : Invalid emailaddress'
@@ -48,9 +48,9 @@ var authPromise = function (req) {
                         }
                     });
             } else {
-                res.status(400).json({
-                    message: "Please enter all details"
-                })
+                reject({
+                    message: 'Enter all fields'
+                });
             }
         }
     });
@@ -107,47 +107,65 @@ const createUser = (request, response) => {
 
 const updateUser = (request, response) => {
     authPromise(request).then(
+
         function (user) {
-            let emailaddress = user["emailaddress"];
+            let emailaddress2 = user["emailaddress"];
+            let bodyEmail = request.body.emailaddress;
+            let updateEmail = bodyEmail;
+            if (typeof bodyEmail !== 'undefined') {
+
+                //IF MY BODY EMAIL IS NOT UNDEFINED
+                if ((emailaddress2 !== bodyEmail)) {
+                    return response.status(400).send({
+                        error: 'You are not authorized'
+                    });
+                }
+
+            } else {
+                //IF BODY IS UNDEFINED
+                updateEmail = emailaddress2;
+            }
+            console.log(` update email:: ${updateEmail}`);
             const {
                 firstname,
                 lastname,
-                password
+                password,
+
             } = request.body;
+
             let update_firstname = firstname || user["firstname"];
             let update_lastname = lastname || user["lastname"];
             if (password != null && password != "") {
-                console.log(password);
-             if(validator.validatePassword(password)){
-                console.log("Updating user with password");
-                bcrypt.hash(password, 10, function (err, hash) {
-                    database.query("UPDATE APPUSERS SET firstname=$1, lastname=$2, password=$3, account_updated=$4 \
+                if (validator.validatePassword(password)) {
+                    console.log("Updating user with password");
+                    bcrypt.hash(password, 10, function (err, hash) {
+                        database.query("UPDATE APPUSERS SET firstname=$1, lastname=$2, password=$3, account_updated=$4 \
                 where emailaddress = $5",
-                        [update_firstname, update_lastname, hash, new Date(), emailaddress],
-                        function (err, result) {
-                            if (err) {
-                                return response.status(500).send({
-                                    error: 'Error updating user account'
-                                });
-                            } else {
-                                console.info("successfully updated the user");
-                                return response.status(200).json({
-                                    info: "success"
-                                })
-                            }
-                        });
-                });
-             }else {
-                return response.status(400).json({
-                    info: 'Password is not strong enough'
-                })
-            }
+                            [update_firstname, update_lastname, hash, new Date(), updateEmail],
+                            function (err, result) {
+                                if (err) {
+                                    return response.status(500).send({
+                                        error: 'Error updating user account'
+                                    });
+                                } else {
+                                    console.info("successfully updated the user");
+                                    return response.status(200).json({
+                                        info: "success"
+                                    })
+                                }
+                            });
+                    });
+                } else {
+                    return response.status(400).json({
+                        info: 'Password is not strong enough'
+                    })
+                }
 
             } else {
                 console.log("Updating user without password");
                 database.query("UPDATE APPUSERS SET firstname=$1, lastname=$2, account_updated=$3 \
         where emailaddress = $4",
-                    [update_firstname, update_lastname, new Date(), emailaddress],
+                    [update_firstname, update_lastname, new Date(), updateEmail],
                     function (err, result) {
                         if (err) {
                             console.error("eror updating user", err);
@@ -172,13 +190,12 @@ const updateUser = (request, response) => {
 const getUser = (request, response) => {
     authPromise(request).then(
         function (user) {
-            const {
-                emailaddress
-            } = request.body;
-
+            console.log(user);
+            const email = user.emailaddress;
+            console.log(email);
             database.query(
                 'SELECT id, emailaddress, firstname, lastname, account_created, account_updated from APPUSERS \
-                  where emailaddress = $1', [emailaddress],
+                  where emailaddress = $1 ', [email],
                 function (err, result) {
                     if (err) {
                         return response.status(500).send({
@@ -188,7 +205,6 @@ const getUser = (request, response) => {
                         return response.status(200).json(result.rows[0]);
                     }
                 });
-
         },
         function (err) {
             response.status(401).send(err);
