@@ -4,7 +4,7 @@
 * Database: POSTGRESQL
 
 ## Build Instructions
-* Clone repo using command "git clone git@github.com:bvkvikas/ccwebapp.git"
+* Clone repo using command "git clone"
 * Navigate to assignment2 directory in ccwebapp folder using "cd webapp/assignment2" command
 * Run "npm install" command on terminal
 
